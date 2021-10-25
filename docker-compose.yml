@@ -1,0 +1,8 @@
+version: "3.9"
+services:
+  server:
+    build: .
+    volumes:
+      - .:/workspace
+    ports:
+      - "8080:80"
