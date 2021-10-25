@@ -4,7 +4,6 @@ __pycache__/
 *$py.class
 
 .idea
-.vscode
 .env
 
 # C extensions
