@@ -1,1 +1,8 @@
 flask==2.0.2
+click==8.0.3
+sqlalchemy==1.4.26
+redis==3.5.3
+requests==2.26.0
+pytest==6.2.5
+redislite==6.0.674960
+pytest-mock==3.6.1

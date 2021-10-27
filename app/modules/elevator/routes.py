@@ -1,0 +1,100 @@
+from functools import wraps
+from shutil import Error
+from flask import g, json
+from flask import request
+from flask import jsonify
+import random
+from app.modules.elevator.context import ElevatorContext
+
+from app.modules.redis import get_redis
+from app.modules.elevator import bp
+from app.modules.elevator.elevator import Elevator
+from app.modules.elevator.auth import authorized, store_elctx
+
+
+letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+def generate_token():
+    return ''.join(random.sample(letters, 5))
+
+@bp.route('/start/<user_key>/<int:problem_id>/<int:number_of_elevators>', methods=['POST', 'GET'])
+def start(user_key, problem_id, number_of_elevators):
+    if not 0 <= problem_id <= 2:
+        return 'Problem ID should be between 0 and 2', 400
+
+    if not 1 <= number_of_elevators <= 4:
+        return 'Number of elevators should be between 1 and 4', 400
+    
+    token = generate_token()
+    elctx = ElevatorContext(problem_id, number_of_elevators)
+    store_elctx(token, elctx)
+
+    return {
+        'token': token,
+        'timestamp': elctx.timestamp,
+        'elevators': [el.to_json() for el in elctx.elevators],
+        'is_end': elctx.is_end
+    }
+
+@bp.route('/oncalls', methods=['GET'])
+@authorized
+def oncalls():
+    return {
+        'token': g.token,
+        'timestamp': g.elctx.timestamp,
+        'elevators': [el.to_json() for el in g.elctx.elevators],
+        'calls': [call.to_json() for call in g.elctx.calls],
+        'is_end': g.elctx.is_end
+    }
+
+@bp.route('/action', methods=['POST'])
+@authorized
+def action():
+    params = request.get_json()
+    commands = params.get('commands', [])
+    ctx = g.elctx
+
+    if len(commands) != ctx.number_of_elevators:
+        return 'Number of commands should match number of elevators', 400
+
+    try:
+        commands = sorted(commands, key=lambda x: x.get('elevator_id'))
+
+        for i in range(ctx.number_of_elevators):
+            if i != int(commands[i].get('elevator_id')):
+                raise Error()
+    except Error as e:
+        return 'One of elevators\' id is invalid', 400
+
+    try:
+        for cmd in commands:
+            elevator_id = int(cmd.get('elevator_id'))
+            command = cmd.get('command')
+            call_ids = list(map(int, cmd.get('call_ids', [])))
+
+            if command == 'STOP':
+                ctx.stop(elevator_id)
+            elif command == 'OPEN':
+                ctx.open(elevator_id)
+            elif command == 'CLOSE':
+                ctx.close(elevator_id)
+            elif command == 'ENTER':
+                ctx.enter(elevator_id, call_ids)
+            elif command == 'EXIT':
+                ctx.exit(elevator_id, call_ids)
+            elif command == 'UP':
+                ctx.up(elevator_id)
+            elif command == 'DOWN':
+                ctx.down(elevator_id)
+            else:
+                return 'Wrong command "' + command + '"', 400 
+
+    except:
+        return 'Invalid arguments', 400
+
+    return {
+        'token': g.token,
+        'timestamp': ctx.timestamp,
+        'elevators': [el.to_json() for el in ctx.elevators],
+        'is_end': ctx.is_end
+    }

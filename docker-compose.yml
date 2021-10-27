@@ -4,5 +4,12 @@ services:
     build: .
     volumes:
       - .:/workspace
+    environment:
+      - FLASK_ENV=development
+      - FLASK_APP=app
+      - FLASK_RUN_PORT=80
     ports:
       - "8080:80"
+  redis:
+    image: redis
+    
