@@ -1,9 +1,9 @@
 class Call:
-    def __init__(self, id):
+    def __init__(self, id, timestamp, start, end):
         self.id = id
-        self.timestamp = 0
-        self.start = 0
-        self.end = 0
+        self.timestamp = timestamp
+        self.start = start
+        self.end = end
     
     def to_json(self):
         return {

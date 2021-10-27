@@ -5,6 +5,7 @@ from flask import request
 from flask import jsonify
 import random
 from app.modules.elevator.context import ElevatorContext
+from app.modules.elevator.erros import CommandError
 
 from app.modules.redis import get_redis
 from app.modules.elevator import bp
@@ -66,6 +67,14 @@ def action():
     except Error as e:
         return 'One of elevators\' id is invalid', 400
 
+    if ctx.is_end:
+        return {
+            'token': g.token,
+            'timestamp': ctx.timestamp,
+            'elevators': [el.to_json() for el in ctx.elevators],
+            'is_end': ctx.is_end
+        }
+
     try:
         for cmd in commands:
             elevator_id = int(cmd.get('elevator_id'))
@@ -88,13 +97,30 @@ def action():
                 ctx.down(elevator_id)
             else:
                 return 'Wrong command "' + command + '"', 400 
-
-    except:
+    except CommandError as e:
+        return str(e), 400
+    except Exception as e:
         return 'Invalid arguments', 400
+
+    ctx.tick()
+
+    store_elctx(g.token, ctx)
 
     return {
         'token': g.token,
         'timestamp': ctx.timestamp,
         'elevators': [el.to_json() for el in ctx.elevators],
         'is_end': ctx.is_end
+    }
+
+@bp.route('/score', methods=['GET'])
+@authorized
+def score():
+    if not g.elctx.is_end:
+        return {
+            'timestamp': 0
+        }
+    
+    return {
+        'timestamp': g.elctx.timestamp
     }
