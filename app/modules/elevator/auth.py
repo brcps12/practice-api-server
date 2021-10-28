@@ -3,7 +3,7 @@ from flask import request
 from flask import g
 import pickle
 
-from app.modules.elevator import bp
+from app.modules.elevator import REDIS_PREFIX, bp
 from app.modules.redis import get_redis
 
 def authorized(func):
@@ -16,22 +16,46 @@ def authorized(func):
 
 @bp.before_request
 def load_elctx():
-    redis = get_redis()
     token = request.headers.get('X-Auth-Token')
 
     if not token:
         return
     
     g.token = token
-    key = 'elevator:' + token
+    g.elctx = get_elctx(token)
+
+def get_elctx(token):
+    redis = get_redis()
+    key = REDIS_PREFIX + token
+    elctx = None
+
     if redis.exists(key):
-        g.elctx = pickle.loads(redis.get(key))
+        elctx = pickle.loads(redis.get(key))
+
+    return elctx
 
 def store_elctx(token, elctx):
     if not token:
         raise Exception('token is not valid')
     
     redis = get_redis()
-    key = 'elevator:' + token
+    key = REDIS_PREFIX + token
 
     redis.set(key, pickle.dumps(elctx))
+
+    if elctx.is_end:
+        redis.rpush(REDIS_PREFIX + 'finish', token)
+
+def get_all_tokens():
+    redis = get_redis()
+    key = REDIS_PREFIX + 'tokens'
+    return redis.lrange(key, 0, -1)
+
+def get_finished_tokens():
+    redis = get_redis()
+    key = REDIS_PREFIX + 'finish'
+    
+    if not redis.exists(key):
+        return []
+
+    return redis.lrange(key, 0, -1)

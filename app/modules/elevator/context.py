@@ -4,6 +4,25 @@ from app.modules.elevator.elevator import Elevator
 from app.modules.elevator.erros import CommandError
 
 
+command_short = {
+    'STOP': 'S',
+    'OPEN': 'O',
+    'CLOSE': 'C',
+    'UP': 'U',
+    'DOWN': 'D',
+    'ENTER': 'E',
+    'EXIT': 'X'
+}
+
+status_short = {
+    'STOPPED': 'S',
+    'OPENED': 'O',
+    'UPWARD': 'U',
+    'DOWNWARD': 'D'
+}
+
+MAX_NUM_ELEVATORS = 4
+
 class ElevatorContext:
     def __init__(self, problem_id, number_of_elevators):
         self.problem_id = problem_id
@@ -30,17 +49,48 @@ class ElevatorContext:
 
         self.dataset = load_dataset(self.problem_id)
         self.dataset_lookup = 0
+        self.history = []
 
         self.tick()
 
         for _ in range(number_of_elevators):
             self.new_elevator()
 
+    def _make_empty_history(self):
+        elevators = [{
+            "floor": 0,
+            "state": "",
+            "command": "",
+            "passengers": []
+        } for _ in range(MAX_NUM_ELEVATORS)]
+
+        self.history.append({'elevators': elevators, 'calls': []})
+
+    def _call_to_history(self, call):
+        return {
+            'id': call.id,
+            'from': call.start,
+            'to': call.end
+        }
+
+    def _write_elevator_history(self, id, cmd):
+        el = self.elevators[id]
+        hist = self.history[-1]['elevators'][id]
+        hist['floor'] = el.floor
+        hist['command'] = cmd
+        hist['state'] = status_short[el.status]
+        hist['passengers'] = [self._call_to_history(c) for c in el.passengers]
+
+    def _write_call_history(self):
+        hist = self.history[-1]['calls']
+        hist.extend([self._call_to_history(c) for c in self.calls])
+
     def new_elevator(self):
         id = len(self.elevators)
         
         elevator = Elevator(id, self.capacity, self.max_floor)
         self.elevators.append(elevator)
+        self._write_elevator_history(id, 'S')
         return elevator
 
     def tick(self):
@@ -59,14 +109,20 @@ class ElevatorContext:
         if self.finish_calls == len(self.dataset):
             self.is_end = True
 
+        self._make_empty_history()
+        self._write_call_history()
+
     def stop(self, elevator_id):
         self.elevators[elevator_id].stop()
+        self._write_elevator_history(elevator_id, 'S')
     
     def open(self, elevator_id):
         self.elevators[elevator_id].open()
+        self._write_elevator_history(elevator_id, 'O')
     
     def close(self, elevator_id):
         self.elevators[elevator_id].close()
+        self._write_elevator_history(elevator_id, 'C')
     
     def enter(self, elevator_id, call_ids):
         calls = self.calls
@@ -84,6 +140,7 @@ class ElevatorContext:
             raise CommandError()
 
         self.elevators[elevator_id].enter(filtered)
+        self._write_elevator_history(elevator_id, 'E')
     
     def exit(self, elevator_id, call_ids):
         elevator = self.elevators[elevator_id]
@@ -97,10 +154,14 @@ class ElevatorContext:
             c.timestamp = self.timestamp
             c.start = elevator.floor
             self.calls.append(c)
+
+        self._write_elevator_history(elevator_id, 'X')
     
     def up(self, elevator_id):
         self.elevators[elevator_id].up()
+        self._write_elevator_history(elevator_id, 'U')
     
     def down(self, elevator_id):
         self.elevators[elevator_id].down()
+        self._write_elevator_history(elevator_id, 'D')
     

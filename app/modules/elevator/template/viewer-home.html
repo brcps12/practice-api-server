@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+    <head>
+        <style>td { padding-right: 1em }</style>
+    </head>
+    <body>
+        <table>
+            <tr>
+                <th>Token</th>
+            </tr>
+            {% for token in tokens %}
+            <tr>
+                <td><a href=./viewer/trials/{{token}}>{{token}}</a></td>
+            </tr>
+            {% endfor %}
+        </table>
+    </body>
+</html>

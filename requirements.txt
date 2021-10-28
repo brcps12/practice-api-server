@@ -6,3 +6,4 @@ requests==2.26.0
 pytest==6.2.5
 redislite==6.0.674960
 pytest-mock==3.6.1
+jinja2==3.0.2

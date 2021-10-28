@@ -1,16 +1,16 @@
 from functools import wraps
 from shutil import Error
-from flask import g, json
+from flask import g
 from flask import request
-from flask import jsonify
-import random
+from flask import render_template
 from app.modules.elevator.context import ElevatorContext
 from app.modules.elevator.erros import CommandError
+import random
+import json
 
 from app.modules.redis import get_redis
-from app.modules.elevator import bp
-from app.modules.elevator.elevator import Elevator
-from app.modules.elevator.auth import authorized, store_elctx
+from app.modules.elevator import REDIS_PREFIX, bp
+from app.modules.elevator.auth import authorized, get_all_tokens, get_elctx, get_finished_tokens, store_elctx
 
 
 letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -29,6 +29,11 @@ def start(user_key, problem_id, number_of_elevators):
     token = generate_token()
     elctx = ElevatorContext(problem_id, number_of_elevators)
     store_elctx(token, elctx)
+
+    # push token
+    key = REDIS_PREFIX + 'tokens'
+    redis = get_redis()
+    redis.rpush(key, token)
 
     return {
         'token': token,
@@ -124,3 +129,17 @@ def score():
     return {
         'timestamp': g.elctx.timestamp
     }
+
+@bp.route('/viewer', methods=['GET'])
+def viewer():
+    tokens = get_finished_tokens()
+    return render_template('viewer-home.html', tokens=[token.decode('ascii') for token in tokens])
+
+@bp.route('/viewer/trials/<token>')
+def trial_viewer(token):
+    elctx = get_elctx(token)
+    if elctx is None or not elctx.is_end:
+        return 'Token is invalid', 400
+    
+    history = elctx.history[:-1]
+    return render_template('viewer-trials.html', trials=json.dumps(history))

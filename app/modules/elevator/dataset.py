@@ -112,9 +112,3 @@ def load_dataset(idx):
         data = map(lambda x: list(map(int, x.split(','))), content.split('\n'))
     
     return list(data)
-
-@bp.cli.command()
-def generate():
-    appeach_mansion()
-    jayg_building()
-    ryan_tower()
