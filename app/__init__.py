@@ -1,6 +1,6 @@
 from flask import Flask
 import pytest
-import redis
+
 
 def create_app():
     app = Flask(__name__)
@@ -14,7 +14,7 @@ def create_app():
         app_redis.init_redis()
 
     """
-    * Import blueprints
+    Import blueprints
     """
 
     from app.modules.elevator import bp as elevator

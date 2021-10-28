@@ -4,7 +4,7 @@ class Call:
         self.timestamp = timestamp
         self.start = start
         self.end = end
-    
+
     def to_json(self):
         return {
             'id': self.id,

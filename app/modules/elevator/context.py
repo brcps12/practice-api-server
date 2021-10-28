@@ -3,7 +3,6 @@ from app.modules.elevator.dataset import load_dataset
 from app.modules.elevator.elevator import Elevator
 from app.modules.elevator.erros import CommandError
 
-
 command_short = {
     'STOP': 'S',
     'OPEN': 'O',
@@ -22,6 +21,7 @@ status_short = {
 }
 
 MAX_NUM_ELEVATORS = 4
+
 
 class ElevatorContext:
     def __init__(self, problem_id, number_of_elevators):
@@ -87,7 +87,7 @@ class ElevatorContext:
 
     def new_elevator(self):
         id = len(self.elevators)
-        
+
         elevator = Elevator(id, self.capacity, self.max_floor)
         self.elevators.append(elevator)
         self._write_elevator_history(id, 'S')
@@ -105,7 +105,7 @@ class ElevatorContext:
             call = Call(item[1], item[0], item[2], item[3])
             self.calls.append(call)
             self.dataset_lookup += 1
-        
+
         if self.finish_calls == len(self.dataset):
             self.is_end = True
 
@@ -115,15 +115,15 @@ class ElevatorContext:
     def stop(self, elevator_id):
         self.elevators[elevator_id].stop()
         self._write_elevator_history(elevator_id, 'S')
-    
+
     def open(self, elevator_id):
         self.elevators[elevator_id].open()
         self._write_elevator_history(elevator_id, 'O')
-    
+
     def close(self, elevator_id):
         self.elevators[elevator_id].close()
         self._write_elevator_history(elevator_id, 'C')
-    
+
     def enter(self, elevator_id, call_ids):
         calls = self.calls
 
@@ -141,7 +141,7 @@ class ElevatorContext:
 
         self.elevators[elevator_id].enter(filtered)
         self._write_elevator_history(elevator_id, 'E')
-    
+
     def exit(self, elevator_id, call_ids):
         elevator = self.elevators[elevator_id]
         calls = elevator.exit(call_ids)
@@ -156,12 +156,11 @@ class ElevatorContext:
             self.calls.append(c)
 
         self._write_elevator_history(elevator_id, 'X')
-    
+
     def up(self, elevator_id):
         self.elevators[elevator_id].up()
         self._write_elevator_history(elevator_id, 'U')
-    
+
     def down(self, elevator_id):
         self.elevators[elevator_id].down()
         self._write_elevator_history(elevator_id, 'D')
-    

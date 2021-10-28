@@ -3,22 +3,24 @@ import requests
 BASE_URL = 'http://localhost/elevator'
 # BASE_URL = 'http://172.26.0.4:8000'
 USER_KEY = 'testuser'
-PROBLEM_ID = 2
+PROBLEM_ID = 1
 NUMBER_OF_ELEVATORS = 4
 ELEVATOR_CAPACITY = 8
 MAX_FLOOR = [6, 25, 25][PROBLEM_ID]
 WAITING_TIME = [3, 5, 5][PROBLEM_ID]
+
 
 def list_split(iterable, funcOrList):
     g_false, g_true = [], []
     c_list = funcOrList
     if callable(funcOrList):
         c_list = [funcOrList(item) for item in iterable]
-    
+
     for item, condition in zip(iterable, c_list):
         (g_false, g_true)[condition].append(item)
-    
+
     return g_false, g_true
+
 
 class Command:
     def __init__(self, elevator_id, command, call_ids=None):
@@ -34,8 +36,9 @@ class Command:
 
         if self.command in ['ENTER', 'EXIT']:
             result['call_ids'] = self.call_ids
-        
+
         return result
+
 
 class Elevator:
     def __init__(self, id, capacity, max_floor):
@@ -50,7 +53,7 @@ class Elevator:
         self.status = 'STOPPED'
         self.upward = True
         self.waiting_time = WAITING_TIME * self.id
-    
+
     def clone(self):
         el = Elevator(self.id, self.capacity, self.max_floor)
         el.passengers = [c.clone() for c in self.passengers]
@@ -60,15 +63,15 @@ class Elevator:
         el.status = self.status
         el.upward = self.upward
         el.waiting_time = self.waiting_time
-        
+
         return el
 
     def notify(self):
         self.ts += 1
-    
+
     def add_client(self, call):
         self.myclients.append(call)
-    
+
     def remove_client(self, callOrId):
         idx = self.myclients.index(callOrId)
         self.myclients.pop(idx)
@@ -105,7 +108,7 @@ class Elevator:
                 cmd = Command(self.id, 'OPEN')
             else:
                 cmd = Command(self.id, 'STOP')
-        
+
         self.do_command(cmd)
         return cmd
 
@@ -135,13 +138,13 @@ class Elevator:
                 'enter': [c for c in self.myclients if c.start == self.floor],
                 'exit': [c for c in self.passengers if c.end == self.floor]
             }
-            
+
             if curfloor['exit']:
                 # remain_passengers, exit_passengers = list_split(self.passengers, curfloor['exit'])
                 _s, _c = self.exit(curfloor['exit'])
                 score += _s
                 cmd = cmd or _c
-            
+
             remain_places = self.capacity - len(self.passengers)
             if remain_places > 0 and curfloor['enter']:
                 # remain_clients, enter_clients = list_split(self.myclients, curfloor['enter'])
@@ -150,7 +153,7 @@ class Elevator:
                 _s, _c = self.enter(enter_clients)
                 score += _s
                 cmd = cmd or _c
-            
+
             calls = [*self.passengers, *self.myclients]
 
             if not calls:
@@ -186,7 +189,7 @@ class Elevator:
         if self.status in ['UPWARD', 'DOWNWARD']:
             count += 1
             cmd = cmd or Command(self.id, 'STOP')
-        
+
         if self.status == 'OPENED':
             count += 1
             cmd = cmd or Command(self.id, 'CLOSE')
@@ -212,20 +215,20 @@ class Elevator:
             if self.floor > self.max_floor:
                 raise Exception()
             return 1, Command(self.id, 'UP')
-        
+
         count, cmd = self.stop()
         cmd = cmd or Command(self.id, 'UP')
         self.floor += 1
         self.status = 'UPWARD'
         return count + 1, cmd
-    
+
     def down(self):
         if self.status == 'DOWNWARD':
             self.floor -= 1
             if self.floor < 1:
                 raise Exception()
             return 1, Command(self.id, 'DOWN')
-        
+
         count, cmd = self.stop()
         cmd = cmd or Command(self.id, 'DOWN')
         self.floor -= 1
@@ -246,8 +249,9 @@ class Elevator:
         self.passengers = [p for p in self.passengers if p not in passengers]
         self.myclients.extend([p for p in passengers if p.end != self.floor])
         cmd = cmd or Command(self.id, 'EXIT', [p.id for p in passengers])
-        
+
         return count + 1, cmd
+
 
 class Call:
     def __init__(self, id, ts, start, end):
@@ -268,16 +272,19 @@ class Call:
         return self.id
 
     def __str__(self):
-        return '{{id: {}, ts: {}, start: {}, end: {}\}}'.format(self.id, self.ts, self.start, self.end)
+        return '{{id: {}, ts: {}, start: {}, end: {}}}'.format(
+            self.id, self.ts, self.start, self.end
+        )
 
     def clone(self):
         call = Call(self.id, self.ts, self.start, self.end)
         return call
 
+
 class API:
     def __init__(self):
         self.token = ''
-            
+
     def start(self):
         url = '/start/{}/{}/{}'.format(USER_KEY, PROBLEM_ID, NUMBER_OF_ELEVATORS)
 
@@ -295,7 +302,7 @@ class API:
             el = elevators[e['id']]
             el.floor = e['floor']
             el.status = e['status']
-            
+
             for p in e['passengers']:
                 el.passengers(Call(p['id'], p['timestamp'], p['start'], p['end']))
 
@@ -349,6 +356,7 @@ class API:
 
         return result.json()
 
+
 class ElevatorAlgorithm:
     def __init__(self, elevators):
         self.num_elevators = len(elevators)
@@ -377,6 +385,7 @@ class ElevatorAlgorithm:
     def next_commands(self):
         commands = [el.next_command() for el in self.elevators]
         return commands
+
 
 if __name__ == '__main__':
     api = API()

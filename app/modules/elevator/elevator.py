@@ -1,4 +1,3 @@
-from app.modules.elevator.call import Call
 from app.modules.elevator.erros import CommandError
 
 
@@ -23,21 +22,21 @@ class Elevator:
     def stop(self):
         if self.status not in ['STOPPED', 'UPWARD', 'DOWNWARD']:
             raise CommandError()
-        
+
         self.status = 'STOPPED'
-    
+
     def open(self):
         if self.status not in ['STOPPED', 'OPENED']:
             raise CommandError()
 
         self.status = 'OPENED'
-    
+
     def close(self):
         if self.status not in ['OPENED']:
             raise CommandError()
 
         self.status = 'STOPPED'
-    
+
     def enter(self, passengers):
         if self.status not in ['OPENED']:
             raise CommandError()
@@ -52,7 +51,7 @@ class Elevator:
         self.passengers.extend(passengers)
 
         self.status = 'OPENED'
-    
+
     def exit(self, passenger_ids):
         if self.status not in ['OPENED']:
             raise CommandError()
@@ -74,17 +73,17 @@ class Elevator:
         self.status = 'OPENED'
 
         return exit_passengers
-    
+
     def up(self):
         if self.status not in ['STOPPED', 'UPWARD']:
             raise CommandError()
 
         if self.floor == self.max_floor:
             raise CommandError()
-        
+
         self.floor += 1
         self.status = 'UPWARD'
-    
+
     def down(self):
         if self.status not in ['STOPPED', 'DOWNWARD']:
             raise CommandError()
@@ -94,4 +93,3 @@ class Elevator:
 
         self.floor -= 1
         self.status = 'DOWNWARD'
-        

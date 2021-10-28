@@ -9,6 +9,7 @@ def generate():
     dataset.jayg_building()
     dataset.ryan_tower()
 
+
 @bp.cli.command()
 def clean_redis():
     redis = get_redis()

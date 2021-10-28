@@ -1,8 +1,8 @@
+# flake8: noqa
 from os import path
 import random
 import bisect
 
-from app.modules.elevator import bp
 
 def gen(pr, count, min_floor, max_floor, seconds, mean, var, func=None):
     def incoming():

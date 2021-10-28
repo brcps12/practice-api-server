@@ -1,11 +1,10 @@
-from redislite import Redis
 import pytest
-import os
-
 from app import create_app
+from redislite import Redis
 
 URL_PREFIX = '/elevator'
 USER_KEY = 'testuserkey'
+
 
 @pytest.fixture
 def client(mocker):
@@ -15,8 +14,9 @@ def client(mocker):
 
     with app.test_client() as client:
         yield client
-    
+
     redis_mock.close()
+
 
 def test_start(client):
     res = client.post(URL_PREFIX + '/start/' + USER_KEY + '/0/1')
@@ -24,6 +24,7 @@ def test_start(client):
 
     res = client.post(URL_PREFIX + '/start/' + USER_KEY + '/10/10')
     assert res.status_code != 200, 'request should not be success'
+
 
 def test_action(client,):
     # Number of elevators is 4
