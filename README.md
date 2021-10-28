@@ -6,6 +6,6 @@
 Regardless of implementation, for getting result, I used official kakao's server. [Link](https://github.com/kakao-recruit/2019-blind-2nd-elevator)
 
 ### Result
-- 어피치 멘션: 16
-- 제이지 빌딩: 580
-- 라이언 타워: 1867
+- 어피치 멘션: 17
+- 제이지 빌딩: 581
+- 라이언 타워: 1868

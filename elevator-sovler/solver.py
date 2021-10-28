@@ -3,7 +3,7 @@ import requests
 BASE_URL = 'http://localhost/elevator'
 # BASE_URL = 'http://172.26.0.4:8000'
 USER_KEY = 'testuser'
-PROBLEM_ID = 1
+PROBLEM_ID = 2
 NUMBER_OF_ELEVATORS = 4
 ELEVATOR_CAPACITY = 8
 MAX_FLOOR = [6, 25, 25][PROBLEM_ID]
@@ -397,5 +397,5 @@ if __name__ == '__main__':
         it += 1
 
     is_end, calls = api.oncalls()
-    print(is_end, ', '.join([c.__str__() for c in calls]))
+    print('Result(Timestamp): ' + str(it))
     # print(api.score())
