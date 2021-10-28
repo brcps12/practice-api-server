@@ -3,11 +3,11 @@ import requests
 BASE_URL = 'http://localhost/elevator'
 # BASE_URL = 'http://172.26.0.4:8000'
 USER_KEY = 'testuser'
-PROBLEM_ID = 1
+PROBLEM_ID = 2
 NUMBER_OF_ELEVATORS = 4
 ELEVATOR_CAPACITY = 8
 MAX_FLOOR = [6, 25, 25][PROBLEM_ID]
-WAITING_TIME = [3, 5, 5][PROBLEM_ID]
+WAITING_TIME = [0, 0, 3][PROBLEM_ID]
 
 
 def list_split(iterable, funcOrList):
@@ -52,7 +52,9 @@ class Elevator:
         self.floor = 1
         self.status = 'STOPPED'
         self.upward = True
-        self.waiting_time = WAITING_TIME * self.id
+        self.waiting_time = -1
+        self._score = -1
+        self._cmd = None
 
     def clone(self):
         el = Elevator(self.id, self.capacity, self.max_floor)
@@ -68,13 +70,24 @@ class Elevator:
 
     def notify(self):
         self.ts += 1
+        if self.waiting_time >= 0:
+            self.waiting_time -= 1
 
     def add_client(self, call):
         self.myclients.append(call)
+        self._score = -1
+        self._cmd = None
 
     def remove_client(self, callOrId):
         idx = self.myclients.index(callOrId)
         self.myclients.pop(idx)
+        self._score = -1
+        self._cmd = None
+
+    def clear_clients(self):
+        self.myclients = []
+        self._score = -1
+        self._cmd = None
 
     def do_command(self, cmd):
         if cmd.command == 'STOP':
@@ -101,6 +114,9 @@ class Elevator:
             # Don't manage re-enter passengers
             self.passengers = [p for p in self.passengers if p.id not in cmd.call_ids]
 
+            if self.floor == 1:
+                self.waiting_time = WAITING_TIME
+
     def next_command(self):
         _, cmd = self.score()
         if cmd is None:
@@ -113,17 +129,20 @@ class Elevator:
         return cmd
 
     def score_if_added(self, call):
-        self.add_client(call)
-        ret = self.score()
-        self.remove_client(call)
-        return ret
+        el_cloned = self.clone()
+        el_cloned.add_client(call)
+        return el_cloned.score()
 
     def score(self):
-        el_cloned = self.clone()
-        score, cmd = el_cloned._score_internal()
-        score += self.waiting_time
-        if self.ts <= self.waiting_time:
+        if self._score >= 0:
+            return self._score, self._cmd
+
+        score, cmd = self.clone()._score_internal()
+        if 0 < self.waiting_time:
+            score += self.waiting_time
             cmd = Command(self.id, 'OPEN')
+        self._score = score
+        self._cmd = cmd
         return score, cmd
 
     def _score_internal(self):
@@ -361,17 +380,17 @@ class ElevatorAlgorithm:
     def __init__(self, elevators):
         self.num_elevators = len(elevators)
         self.elevators = elevators
-        self.calls = []
         self.ts = 0
 
     def notify(self, calls):
         self.ts += 1
-        added_calls = [c for c in calls if c not in self.calls]
-        self.calls.extend(added_calls)
 
-        for c in added_calls:
+        for el in self.elevators:
+            el.clear_clients()
+
+        for c in calls:
             scores = [
-                max(el.score()[0] if j != i else el.score_if_added(c)[0] for j, el in enumerate(elevators))
+                max(el.score()[0] if j != i else el.score_if_added(c)[0] for j, el in enumerate(self.elevators))
                 for i in range(self.num_elevators)
             ]
 
@@ -379,7 +398,7 @@ class ElevatorAlgorithm:
             elevator = self.elevators[elidx]
             elevator.add_client(c)
 
-        for el in elevators:
+        for el in self.elevators:
             el.notify()
 
     def next_commands(self):
