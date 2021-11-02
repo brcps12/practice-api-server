@@ -1,11 +1,9 @@
-import enum
-import json
 import math
 
 import requests
 
 BASE_URL = 'http://localhost/tbike'
-BASE_URL = 'https://kox947ka1a.execute-api.ap-northeast-2.amazonaws.com/prod/users'
+# BASE_URL = 'https://kox947ka1a.execute-api.ap-northeast-2.amazonaws.com/prod/users'
 PROBLEM_ID = 2
 
 N_GRID = [5, 60][PROBLEM_ID - 1]
@@ -258,72 +256,42 @@ class FirstAlgorithm:
     def __init__(self, context):
         self.context = context
         self.time = 0
-        self.op_diffs = [[0] for _ in range(N_LOCATIONS)]
 
     def next_commands(self):
-        # Calculate how amount of requests and returns are occurred
-        for i in range(N_LOCATIONS):
-            loc = self.context.locations[i]
-            diff = loc.bikes_counts[-1] - loc.bikes_counts[-2]
-            self.op_diffs[i].append(diff + self.op_diffs[i][-1])
-        
-        # recent 4 hours
-        base = self.time // 240 * 240
-        trends = [(v[-1] - v[base], i) for i, v in enumerate(self.op_diffs)]
-        trends = sorted(trends)
-
         prior = [1] * N_LOCATIONS
-        """
-        for i in range(N_LOCATIONS // 2):
-            lid = trends[i][1]
-            p = 5 * (1 / (1 + math.exp(8 * i / (N_LOCATIONS // 2 - 4))))
-            prior[lid] *= p
-
-            lid = trends[-i - 1][1]
-            p = 5 * (1 / (1 + math.exp(8 * i / (N_LOCATIONS // 2 - 4))))
-            prior[lid] *= p
-        """
 
         for loc in self.context.locations:
             if loc.bikes_counts[-1] == 0:
-                prior[loc.id] *= 3
-            if loc.bikes_counts[-1] == 1:
+                prior[loc.id] *= 1.7
+            elif loc.bikes_counts[-1] <= 1:
                 prior[loc.id] *= 1.5
-            if loc.bikes_counts[-1] >= 3:
+            elif loc.bikes_counts[-1] >= 4:
+                prior[loc.id] *= 1.7
+            elif loc.bikes_counts[-1] >= 2:
                 prior[loc.id] *= 1.5
 
         pi = sorted(enumerate(prior), key=lambda x: x[1], reverse=True)
 
-        # top 1000 locations are working
-
-        # need work type, pos: load to truck, neg: unload from truck, 0: nothing
         work_type = [0] * N_LOCATIONS
+
         for i in range(N_LOCATIONS):
             c = self.context.locations[i].bikes_counts[-1]
-            if c <= 1:
+            if c == 0:
                 work_type[i] = -2
-            elif c <= 2:
+            elif c <= 1:
                 work_type[i] = -1
-            elif c >= 3:
-                work_type[i] = 1
-
-        """
-        for c, lid in trends:
-            if c > 0 and self.context.locations[lid].bikes_counts[-1] < c:
-                work_type[lid] = -1
-            elif c < 0 and self.context.locations[lid].bikes_counts[-1] >= 1:
-                work_type[lid] = 1
-        """
+            elif c >= 2:
+                work_type[i] = c - 1
 
         jobs = []
         for i in range(25):
             lid = pi[i][0]
             jobs.append((lid, work_type[lid]))
+            
+        print(jobs[:10])
 
         for truck in self.context.trucks:
             truck.clear_jobs()
-
-        before_jobs = 0
 
         for job in jobs:
             scores_added = [truck.score_if_added(job) for truck in self.context.trucks]
