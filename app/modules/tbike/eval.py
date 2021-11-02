@@ -33,14 +33,4 @@ def eval_tbike(tbike):
     print(S1, S2)
     print(tbike.success_requests_count, S, Sp)
     print(T, t)
-    return {
-        'score': max(S1 * 0.95 + S2 * 0.05, 0),
-        'S1': S1,
-        'S2': S2,
-        'T': T,
-        't': t,
-        'S': S,
-        'Sp': Sp,
-        'SS': tbike.success_requests_count,
-        'FS': tbike.failed_requests_count
-    }
+    return max(S1 * 0.95 + S2 * 0.05, 0)

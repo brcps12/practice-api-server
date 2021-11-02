@@ -13,14 +13,14 @@ class TBikeTruck:
             'loaded_bikes_count': self.bikes_count
         }
 
-    def go_top(self):
+    def go_up(self):
         loc = self.location.at_top()
         if loc is not None:
             self.location = loc
             self.distance += 1
 
     def go_down(self):
-        loc = self.location.at_down()
+        loc = self.location.at_bottom()
         if loc is not None:
             self.location = loc
             self.distance += 1

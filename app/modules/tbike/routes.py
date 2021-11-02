@@ -65,4 +65,4 @@ def simulate():
 @bp.route('/score', methods=['GET'])
 @authorized
 def score():
-    return eval_tbike(g.tbike)
+    return {'score': eval_tbike(g.tbike)}

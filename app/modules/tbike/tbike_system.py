@@ -3,7 +3,7 @@ from .location import TBikeLocation
 from .truck import TBikeTruck
 
 NUMBER_OF_GRID = [5, 60]
-NUMBER_OF_TRUCKS = [5, 15]
+NUMBER_OF_TRUCKS = [5, 10]
 NUMBER_OF_BIKES_IN_EACH_LOCATION = [4, 3]
 TRUCK_CAPACITY = 20
 TOTAL_TIMES = 12 * 60  # 12 hours
@@ -67,7 +67,7 @@ class TBikeSystem:
                 c = int(cmds[sec])
 
                 if c == 1:
-                    truck.go_top()
+                    truck.go_up()
                 elif c == 2:
                     truck.go_right()
                 elif c == 3:

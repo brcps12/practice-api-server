@@ -29,7 +29,7 @@ class TBikeLocation:
     def at_top(self):
         return self._get_relative_location(0, 1)
 
-    def at_down(self):
+    def at_bottom(self):
         return self._get_relative_location(0, -1)
 
     def at_left(self):
