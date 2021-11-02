@@ -11,7 +11,7 @@
 서버는 `docker`를 사용하여 실행되기 때문에 도커가 설치되어 있어야 합니다. `elevator` 서버는 발행된 토큰별 저장소를 보장하기 위해 **redis**를 사용하였고, **pickle**을 이용하여 저장하였습니다.
 
 실행 명령어는 다음과 같습니다.
-```sh
+```console
 $ docker compose up
 or in background,
 $ docker compose up -d
@@ -21,13 +21,13 @@ $ docker compose up -d
 
 데이터 구성은 원본 깃허브 코드에서 그대로 가져온 것입니다. 데이터 구성도 같지만 만약 새로운 데이터를 추출하기 위해서는 다음 명령어를 **컨테이너 내부**에서 입력하시면 됩니다.
 
-```sh
+```console
 # flask elevator generate
 ```
 
 엘리베이터와 관련된 데이터를 모두 지우고 싶으면 아래 명령어를 입력하시면 됩니다.
 
-```sh
+```console
 # flask elevator clean-redis
 ```
 
